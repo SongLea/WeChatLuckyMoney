@@ -1,0 +1,2 @@
+// 在Gradle中，使用文件settings.gradle定义当前项目的子项目
+include ':app'

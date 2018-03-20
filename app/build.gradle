@@ -1,0 +1,64 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+
+android {
+    // 编译版本，就是运行我们这个项目的需要的SDK
+    compileSdkVersion 27
+    // 构建工具的版本，其中包括了打包工具aapt、dx等等，这个工具的目录位于your_sdk_path/build-tools/XX.XX.XX
+    buildToolsVersion "27.0.3"
+    // 在android 6.0(api 23)SDK取消了对Apache HTTP客户端的支持，改用HttpURLConnection类(效率更高，因为可以通过透明压缩与响应缓存减少网络请求，并可最大限度减少耗电量)
+    useLibrary 'org.apache.http.legacy'
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 27
+        versionCode 1
+        versionName "v0.0.1-BETA"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        ndk {
+            // 设置支持的SO库架构:'x86', 'armeabi-v7a', 'x86_64', 'arm64-v8a'
+            abiFilters 'armeabi', 'armeabi-v7a', 'x86', 'x86_64'
+        }
+    }
+
+    signingConfigs {
+        releaseConfig {
+            storeFile file("../songlea.jks")
+            storePassword project.hasProperty("KEYSTORE_PASS") ? KEYSTORE_PASS : System.getenv("KEYSTORE_PASS")
+            keyAlias project.hasProperty("ALIAS_NAME") ? ALIAS_NAME : System.getenv("ALIAS_NAME")
+            keyPassword project.hasProperty("ALIAS_PASS") ? ALIAS_PASS : System.getenv("ALIAS_PASS")
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.releaseConfig
+        }
+    }
+
+    // Android Studio提供了一个称为Lint的代码扫描工具，可以非常容易的帮你辨别和纠正代码的结构性质量问题，而无须你执行app或者编写测试用例
+    // 会在 your_project_directory/build/outputs/ 会生成 两个文件 lint-result.xml, lint-result.html 和文件夹 lint-result-files.
+    // 最重要的是 lint-result.xml 文件，里面包含了我们要解析的信息，包含项目中不再使用的资源文件信息。
+    // 再android-resource-remover --xml lint-result.xml 执行完这个命令，项目中不再使用的资源文件，包含 string ，color ,value等全都被删除掉。
+    lintOptions {
+        // 设置为true会关闭lint分析进度
+        quiet true
+        // 如果为true，则在发现错误时停止gradle构建
+        abortOnError false
+        // 如果为true，则只报告错误
+        ignoreWarnings true
+    }
+}
+
+dependencies {
+    // 其中的compile已经过时，推荐使用implementation
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'com.android.support:support-v4:27.1.0'
+    implementation 'com.android.support:appcompat-v7:27.1.0'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.1'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
+}

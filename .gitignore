@@ -1,0 +1,10 @@
+*.iml
+*.ipr
+*.iws
+.gradle
+.idea
+.DS_Store # only needed under mac os
+/build
+/captures
+/local.properties
+/songlea.jks
