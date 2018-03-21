@@ -12,6 +12,7 @@
     <string name="star_1">★</string>
     <string name="webview_github_title">GitHub 项目主页</string>
     <string name="webview_github_url">https://github.com/SongLea/WeChatLuckyMoney</string>
+    <string name="url_github_issues">https://github.com/SongLea/WeChatLuckyMoney/issues</string>
     <!-- MainActivity kotlin -->
     <string name="preference">偏好设置</string>
     <string name="turn_on_toast">点击「微信红包」</string>
@@ -30,11 +31,8 @@
     <string name="update_new_seg3">),请进入设置完成更新(ฅ´ω`ฅ)</string>
     <string name="update_already_latest">已经是最新版本了(❁´▽`❁)</string>
     <string name="pref_watch_exclude_words_summary">不拆开包含这些文字的红包(空格间隔)</string>
-    <string name="pref_comment_words_summary">随机选择下列感谢语(空格间隔)</string>
-    <string name="url_github_issues">https://github.com/SongLea/WeChatLuckyMoney/issues</string>
     <string name="download_backend">正在后台下载</string>
     <string name="download_redirect">正在前往下载页面</string>
-    <string name="download_hint">点击\"普通下载\"获取 Uber</string>
     <string name="watch_options">监视选项</string>
     <string name="watch_notifications">监视系统通知</string>
     <string name="watch_notifications_hint">读取新消息通知中的红包提示并进入聊天页</string>

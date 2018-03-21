@@ -95,10 +95,6 @@ class WebViewActivity : Activity() {
                         Toast.makeText(applicationContext, R.string.download_backend, Toast.LENGTH_SHORT).show()
                         DownloadUtil().enqueue(url, applicationContext)
                         true
-                    } else if (!url.contains(ConnectivityUtil.HTTP_TYPE)) {
-                        Toast.makeText(applicationContext, R.string.download_redirect, Toast.LENGTH_LONG).show()
-                        webViewBar?.text = getString(R.string.download_hint)
-                        false
                     } else {
                         view.loadUrl(url)
                         false
