@@ -9,6 +9,8 @@ android {
     buildToolsVersion "27.0.3"
     // 在android 6.0(api 23)SDK取消了对Apache HTTP客户端的支持，改用HttpURLConnection类(效率更高，因为可以通过透明压缩与响应缓存减少网络请求，并可最大限度减少耗电量)
     useLibrary 'org.apache.http.legacy'
+
+    // 默认配置
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 27
@@ -21,20 +23,40 @@ android {
         }
     }
 
+    // 签名配置
     signingConfigs {
         releaseConfig {
-            storeFile file("../songlea.jks")
+            storeFile file('../songlea.jks')
+            storePassword project.hasProperty("KEYSTORE_PASS") ? KEYSTORE_PASS : System.getenv("KEYSTORE_PASS")
+            keyAlias project.hasProperty("ALIAS_NAME") ? ALIAS_NAME : System.getenv("ALIAS_NAME")
+            keyPassword project.hasProperty("ALIAS_PASS") ? ALIAS_PASS : System.getenv("ALIAS_PASS")
+        }
+        debugConfig {
+            storeFile file('../songlea.jks')
             storePassword project.hasProperty("KEYSTORE_PASS") ? KEYSTORE_PASS : System.getenv("KEYSTORE_PASS")
             keyAlias project.hasProperty("ALIAS_NAME") ? ALIAS_NAME : System.getenv("ALIAS_NAME")
             keyPassword project.hasProperty("ALIAS_PASS") ? ALIAS_PASS : System.getenv("ALIAS_PASS")
         }
     }
 
+    // 构建设置
     buildTypes {
         release {
-            minifyEnabled true
+            debuggable false
+            jniDebuggable false
+            minifyEnabled true  // 会对代码进行混淆和压缩
+            shrinkResources true // 是否清理无用资源,依赖于minifyEnabled
+            zipAlignEnabled true // 是否启用zipAlign压缩
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.releaseConfig
+        }
+        debug {
+            debuggable true
+            jniDebuggable true
+            minifyEnabled false
+            shrinkResources false
+            zipAlignEnabled false
+            signingConfig signingConfigs.debugConfig
         }
     }
 
