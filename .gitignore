@@ -8,3 +8,6 @@
 /captures
 /local.properties
 /songlea.jks
+
+# don't push github
+gradle.properties
