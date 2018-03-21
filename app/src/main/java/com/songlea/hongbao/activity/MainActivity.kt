@@ -19,7 +19,6 @@ import android.widget.Toast
 import com.songlea.hongbao.R
 
 import com.songlea.hongbao.util.ConnectivityUtil
-import com.songlea.hongbao.util.UpdateTask
 
 /**
  * 应用主界面
@@ -31,14 +30,16 @@ class MainActivity : Activity(), AccessibilityManager.AccessibilityStateChangeLi
     // 开关切换按钮
     private lateinit var pluginStatusText: TextView
     private lateinit var pluginStatusIcon: ImageView
+
     // AccessibilityService管理
     private lateinit var accessibilityManager: AccessibilityManager
+
     // 获取HongbaoService 是否启用状态
     private val isServiceEnabled: Boolean
         get() {
             val accessibilityServices = accessibilityManager
                     .getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_GENERIC)
-            return accessibilityServices.any { it.id == packageName + "/.services.HongbaoService" }
+            return accessibilityServices.any { it.id == packageName + "/.services.LuckyMoneyService" }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,9 +78,6 @@ class MainActivity : Activity(), AccessibilityManager.AccessibilityStateChangeLi
     override fun onResume() {
         super.onResume()
         updateServiceStatus()
-        // Check for update when WIFI is connected or on first time.
-        if (ConnectivityUtil.isWifi(this) || UpdateTask.count == 0)
-            UpdateTask(this, false).update()
     }
 
     override fun onDestroy() {
@@ -88,6 +86,11 @@ class MainActivity : Activity(), AccessibilityManager.AccessibilityStateChangeLi
         super.onDestroy()
     }
 
+    override fun onAccessibilityStateChanged(enabled: Boolean) {
+        updateServiceStatus()
+    }
+
+    // 开启系统服务界面
     fun openAccessibility(view: View) {
         try {
             Toast.makeText(this, getString(R.string.turn_on_toast)
@@ -98,18 +101,9 @@ class MainActivity : Activity(), AccessibilityManager.AccessibilityStateChangeLi
             Toast.makeText(this, getString(R.string.turn_on_error_toast), Toast.LENGTH_LONG).show()
             Log.e(MainActivity::class.java.name, e.message)
         }
-
     }
 
-    // 打开对应的github主页地址
-    fun openGitHub() {
-        val webViewIntent = Intent(this, WebViewActivity::class.java)
-        webViewIntent.putExtra(ConnectivityUtil.TITLE, R.string.webview_github_title)
-        webViewIntent.putExtra(ConnectivityUtil.URL, R.string.webview_github_url)
-        startActivity(webViewIntent)
-    }
-
-
+    // 打开设置界面
     fun openSettings(view: View) {
         val settingsIntent = Intent(this, SettingsActivity::class.java)
         settingsIntent.putExtra(ConnectivityUtil.TITLE, getString(R.string.preference))
@@ -117,9 +111,12 @@ class MainActivity : Activity(), AccessibilityManager.AccessibilityStateChangeLi
         startActivity(settingsIntent)
     }
 
-
-    override fun onAccessibilityStateChanged(enabled: Boolean) {
-        updateServiceStatus()
+    // 打开对应的github主页
+    fun openGitHub(view: View) {
+        val webViewIntent = Intent(this, WebViewActivity::class.java)
+        webViewIntent.putExtra(ConnectivityUtil.TITLE, getString(R.string.webview_github_title))
+        webViewIntent.putExtra(ConnectivityUtil.URL, getString(R.string.webview_github_url))
+        startActivity(webViewIntent)
     }
 
     /**
@@ -135,11 +132,4 @@ class MainActivity : Activity(), AccessibilityManager.AccessibilityStateChangeLi
         }
     }
 
-    // 打开对应的github主页
-    fun openGitHub(view: View) {
-        val webViewIntent = Intent(this, WebViewActivity::class.java)
-        webViewIntent.putExtra(ConnectivityUtil.TITLE, getString(R.string.webview_github_title))
-        webViewIntent.putExtra(ConnectivityUtil.URL, getString(R.string.webview_github_url))
-        startActivity(webViewIntent)
-    }
 }

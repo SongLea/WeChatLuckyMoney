@@ -64,8 +64,6 @@ class SettingsActivity : FragmentActivity() {
         super.onBackPressed()
     }
 
-
-
     fun enterAccessibilityPage(view: View) {
         Toast.makeText(this, getString(R.string.turn_on_toast), Toast.LENGTH_SHORT).show()
         val mAccessibleIntent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)

@@ -18,8 +18,7 @@ import android.widget.TextView
 import android.widget.Toast
 import com.songlea.hongbao.R
 import com.songlea.hongbao.util.ConnectivityUtil
-import xyz.monkeytong.hongbao.utils.DownloadUtil
-import android.view.ViewGroup
+import com.songlea.hongbao.util.DownloadUtil
 
 
 /**
@@ -91,13 +90,19 @@ class WebViewActivity : Activity() {
                 // 如果主机应用程序要离开当前的WebView而自身处理URL时返回true,否则返回false
                 override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                     val url = request.url.toString()
-                    return if (url.contains(ConnectivityUtil.APK_TYPE)) {
-                        Toast.makeText(applicationContext, R.string.download_backend, Toast.LENGTH_SHORT).show()
-                        DownloadUtil().enqueue(url, applicationContext)
-                        true
-                    } else {
-                        view.loadUrl(url)
-                        false
+                    return when {
+                        url.contains(ConnectivityUtil.APK_TYPE) -> {
+                            // 提示并下载
+                            Toast.makeText(applicationContext, R.string.download_backend, Toast.LENGTH_SHORT).show()
+                            DownloadUtil().enqueue(url, applicationContext)
+                            true
+                        }
+                        url.contains(ConnectivityUtil.HTTP_TYPE) -> {
+                            // 在WebView中直接加载其URL
+                            view.loadUrl(url)
+                            false
+                        }
+                        else -> true
                     }
                 }
 

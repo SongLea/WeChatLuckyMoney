@@ -14,12 +14,16 @@ import android.preference.PreferenceManager
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
-import com.songlea.hongbao.util.HongbaoSignature
-import xyz.monkeytong.hongbao.utils.PowerUtil
+import com.songlea.hongbao.util.LuckyMoneySignature
 
-class HongBaoService : AccessibilityService(), SharedPreferences.OnSharedPreferenceChangeListener {
+/**
+ * 红包服务
+ *
+ * @author Song Lea
+ */
+class LuckyMoneyService : AccessibilityService(), SharedPreferences.OnSharedPreferenceChangeListener {
+
     private var currentActivityName = WECHAT_LUCKMONEY_GENERAL_ACTIVITY
-
     private var rootNodeInfo: AccessibilityNodeInfo? = null
     private var mReceiveNode: AccessibilityNodeInfo? = null
     private var mUnpackNode: AccessibilityNodeInfo? = null
@@ -29,21 +33,15 @@ class HongBaoService : AccessibilityService(), SharedPreferences.OnSharedPrefere
     private var mMutex = false
     private var mListMutex = false
     private var mChatMutex = false
-    private val signature = HongbaoSignature()
+    private val signature = LuckyMoneySignature()
 
-    private var powerUtil: PowerUtil? = null
     private var sharedPreferences: SharedPreferences? = null
 
-    /**
-     * AccessibilityEvent
-     *
-     * @param event 事件
-     */
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
+
         if (sharedPreferences == null) return
 
         setCurrentActivityName(event)
-
         /* 检测通知消息 */
         if (!mMutex) {
             if (sharedPreferences!!.getBoolean("pref_watch_notification", false) && watchNotifications(event)) return
@@ -56,6 +54,21 @@ class HongBaoService : AccessibilityService(), SharedPreferences.OnSharedPrefere
             if (sharedPreferences!!.getBoolean("pref_watch_chat", false)) watchChat(event)
             mChatMutex = false
         }
+    }
+
+    public override fun onServiceConnected() {
+        super.onServiceConnected()
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        sharedPreferences?.registerOnSharedPreferenceChangeListener(this)
+    }
+
+
+    override fun onInterrupt() {
+
+    }
+
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
+        // To change body of created functions use File | Settings | File Templates.
     }
 
     private fun watchChat(event: AccessibilityEvent) {
@@ -79,17 +92,15 @@ class HongBaoService : AccessibilityService(), SharedPreferences.OnSharedPrefere
         /* 如果戳开但还未领取 */
         if (mUnpackCount == 1 && mUnpackNode != null) {
             val delayFlag = sharedPreferences!!.getInt("pref_open_delay", 0) * 1000
-            android.os.Handler().postDelayed(
-                    {
-                        try {
-                            openPacket()
-                        } catch (e: Exception) {
-                            mMutex = false
-                            mLuckyMoneyPicked = false
-                            mUnpackCount = 0
-                        }
-                    },
-                    delayFlag.toLong())
+            android.os.Handler().postDelayed({
+                try {
+                    openPacket()
+                } catch (e: Exception) {
+                    mMutex = false
+                    mLuckyMoneyPicked = false
+                    mUnpackCount = 0
+                }
+            }, delayFlag.toLong())
         }
     }
 
@@ -100,7 +111,6 @@ class HongBaoService : AccessibilityService(), SharedPreferences.OnSharedPrefere
             mUnpackNode!!.performAction(AccessibilityNodeInfo.ACTION_CLICK)
         } else {
             if (android.os.Build.VERSION.SDK_INT > 23) {
-
                 val path = Path()
                 if (640f == dpi) {
                     path.moveTo(720f, 1575f)
@@ -108,7 +118,8 @@ class HongBaoService : AccessibilityService(), SharedPreferences.OnSharedPrefere
                     path.moveTo(540f, 1060f)
                 }
                 val builder = GestureDescription.Builder()
-                val gestureDescription = builder.addStroke(GestureDescription.StrokeDescription(path, 450, 50)).build()
+                val gestureDescription = builder.addStroke(GestureDescription.StrokeDescription(path,
+                        450, 50)).build()
                 dispatchGesture(gestureDescription, object : AccessibilityService.GestureResultCallback() {
                     override fun onCompleted(gestureDescription: GestureDescription) {
                         Log.d("test", "onCompleted")
@@ -122,7 +133,6 @@ class HongBaoService : AccessibilityService(), SharedPreferences.OnSharedPrefere
                         super.onCancelled(gestureDescription)
                     }
                 }, null)
-
             }
         }
     }
@@ -131,17 +141,16 @@ class HongBaoService : AccessibilityService(), SharedPreferences.OnSharedPrefere
         if (event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             return
         }
-
-        try {
+        currentActivityName = try {
             val componentName = ComponentName(
                     event.packageName.toString(),
                     event.className.toString()
             )
 
             packageManager.getActivityInfo(componentName, 0)
-            currentActivityName = componentName.flattenToShortString()
+            componentName.flattenToShortString()
         } catch (e: PackageManager.NameNotFoundException) {
-            currentActivityName = WECHAT_LUCKMONEY_GENERAL_ACTIVITY
+            WECHAT_LUCKMONEY_GENERAL_ACTIVITY
         }
 
     }
@@ -155,8 +164,7 @@ class HongBaoService : AccessibilityService(), SharedPreferences.OnSharedPrefere
             return false
 
         val nodes = eventSource.findAccessibilityNodeInfosByText(WECHAT_NOTIFICATION_TIP)
-        //增加条件判断currentActivityName.contains(WECHAT_LUCKMONEY_GENERAL_ACTIVITY)
-        //避免当订阅号中出现标题为“[微信红包]拜年红包”（其实并非红包）的信息时误判
+        // 避免当订阅号中出现标题为“[微信红包]拜年红包”（其实并非红包）的信息时误判
         if (!nodes.isEmpty() && currentActivityName.contains(WECHAT_LUCKMONEY_GENERAL_ACTIVITY)) {
             val nodeToClick = nodes[0] ?: return false
             val contentDescription = nodeToClick.contentDescription
@@ -191,10 +199,6 @@ class HongBaoService : AccessibilityService(), SharedPreferences.OnSharedPrefere
 
         }
         return true
-    }
-
-    override fun onInterrupt() {
-
     }
 
     private fun findOpenButton(node: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
@@ -232,7 +236,8 @@ class HongBaoService : AccessibilityService(), SharedPreferences.OnSharedPrefere
             this.getTheLastNode(WECHAT_VIEW_OTHERS_CH, WECHAT_VIEW_SELF_CH)
         else
             this.getTheLastNode(WECHAT_VIEW_OTHERS_CH)
-        if (node1 != null && (currentActivityName.contains(WECHAT_LUCKMONEY_CHATTING_ACTIVITY) || currentActivityName.contains(WECHAT_LUCKMONEY_GENERAL_ACTIVITY))) {
+        if (node1 != null && (currentActivityName.contains(WECHAT_LUCKMONEY_CHATTING_ACTIVITY)
+                        || currentActivityName.contains(WECHAT_LUCKMONEY_GENERAL_ACTIVITY))) {
             val excludeWords = sharedPreferences!!.getString("pref_watch_exclude_words", "")
             if (this.signature.generateSignature(node1, excludeWords)) {
                 mLuckyMoneyReceived = true
@@ -244,7 +249,8 @@ class HongBaoService : AccessibilityService(), SharedPreferences.OnSharedPrefere
 
         /* 戳开红包，红包还没抢完，遍历节点匹配“拆红包” */
         val node2 = findOpenButton(this.rootNodeInfo)
-        if (node2 != null && "android.widget.Button" == node2.className && currentActivityName.contains(WECHAT_LUCKMONEY_RECEIVE_ACTIVITY)) {
+        if (node2 != null && "android.widget.Button" == node2.className
+                && currentActivityName.contains(WECHAT_LUCKMONEY_RECEIVE_ACTIVITY)) {
             mUnpackNode = node2
             mUnpackCount += 1
             return
@@ -255,7 +261,8 @@ class HongBaoService : AccessibilityService(), SharedPreferences.OnSharedPrefere
                 WECHAT_BETTER_LUCK_CH, WECHAT_DETAILS_CH,
                 WECHAT_BETTER_LUCK_EN, WECHAT_DETAILS_EN, WECHAT_EXPIRES_CH)
         if (mMutex && eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED && hasNodes
-                && (currentActivityName.contains(WECHAT_LUCKMONEY_DETAIL_ACTIVITY) || currentActivityName.contains(WECHAT_LUCKMONEY_RECEIVE_ACTIVITY))) {
+                && (currentActivityName.contains(WECHAT_LUCKMONEY_DETAIL_ACTIVITY)
+                        || currentActivityName.contains(WECHAT_LUCKMONEY_RECEIVE_ACTIVITY))) {
             mMutex = false
             mLuckyMoneyPicked = false
             mUnpackCount = 0
@@ -285,10 +292,7 @@ class HongBaoService : AccessibilityService(), SharedPreferences.OnSharedPrefere
     private fun hasOneOfThoseNodes(vararg texts: String): Boolean {
         var nodes: List<AccessibilityNodeInfo>?
         for (text in texts) {
-            if (text == null) continue
-
             nodes = this.rootNodeInfo!!.findAccessibilityNodeInfosByText(text)
-
             if (nodes != null && !nodes.isEmpty()) return true
         }
         return false
@@ -301,13 +305,10 @@ class HongBaoService : AccessibilityService(), SharedPreferences.OnSharedPrefere
         var nodes: List<AccessibilityNodeInfo>?
 
         for (text in texts) {
-            if (text == null) continue
-
             nodes = this.rootNodeInfo!!.findAccessibilityNodeInfosByText(text)
 
             if (nodes != null && !nodes.isEmpty()) {
                 tempNode = nodes[nodes.size - 1]
-                if (tempNode == null) return null
                 val bounds = Rect()
                 tempNode.getBoundsInScreen(bounds)
                 if (bounds.bottom > bottom) {
@@ -320,40 +321,15 @@ class HongBaoService : AccessibilityService(), SharedPreferences.OnSharedPrefere
         return lastNode
     }
 
-    public override fun onServiceConnected() {
-        super.onServiceConnected()
-        this.watchFlagsFromPreference()
-    }
-
-    private fun watchFlagsFromPreference() {
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-        sharedPreferences!!.registerOnSharedPreferenceChangeListener(this)
-
-        this.powerUtil = PowerUtil(this)
-        val watchOnLockFlag = sharedPreferences!!.getBoolean("pref_watch_on_lock", false)
-        this.powerUtil!!.handleWakeLock(watchOnLockFlag)
-    }
-
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
-        if (key == "pref_watch_on_lock") {
-            val changedValue = sharedPreferences.getBoolean(key, false)
-            this.powerUtil!!.handleWakeLock(changedValue)
-        }
-    }
-
-    override fun onDestroy() {
-        this.powerUtil!!.handleWakeLock(false)
-        super.onDestroy()
-    }
-
     private fun generateCommentString(): String? {
         if (!signature.others) return null
 
         val needComment = sharedPreferences!!.getBoolean("pref_comment_switch", false)
         if (!needComment) return null
 
-        val wordsArray = sharedPreferences!!.getString("pref_comment_words", "")!!.split(" +".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        if (wordsArray.size == 0) return null
+        val wordsArray = sharedPreferences!!.getString("pref_comment_words", "")!!
+                .split(" +".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        if (wordsArray.isEmpty()) return null
 
         val atSender = sharedPreferences!!.getBoolean("pref_comment_at", false)
         return if (atSender) {
@@ -364,17 +340,17 @@ class HongBaoService : AccessibilityService(), SharedPreferences.OnSharedPrefere
     }
 
     companion object {
-        private val WECHAT_DETAILS_EN = "Details"
-        private val WECHAT_DETAILS_CH = "红包详情"
-        private val WECHAT_BETTER_LUCK_EN = "Better luck next time!"
-        private val WECHAT_BETTER_LUCK_CH = "手慢了"
-        private val WECHAT_EXPIRES_CH = "已超过24小时"
-        private val WECHAT_VIEW_SELF_CH = "查看红包"
-        private val WECHAT_VIEW_OTHERS_CH = "领取红包"
-        private val WECHAT_NOTIFICATION_TIP = "[微信红包]"
-        private val WECHAT_LUCKMONEY_RECEIVE_ACTIVITY = "LuckyMoneyReceiveUI"
-        private val WECHAT_LUCKMONEY_DETAIL_ACTIVITY = "LuckyMoneyDetailUI"
-        private val WECHAT_LUCKMONEY_GENERAL_ACTIVITY = "LauncherUI"
-        private val WECHAT_LUCKMONEY_CHATTING_ACTIVITY = "ChattingUI"
+        private const val WECHAT_DETAILS_EN = "Details"
+        private const val WECHAT_DETAILS_CH = "红包详情"
+        private const val WECHAT_BETTER_LUCK_EN = "Better luck next time!"
+        private const val WECHAT_BETTER_LUCK_CH = "手慢了"
+        private const val WECHAT_EXPIRES_CH = "已超过24小时"
+        private const val WECHAT_VIEW_SELF_CH = "查看红包"
+        private const val WECHAT_VIEW_OTHERS_CH = "领取红包"
+        private const val WECHAT_NOTIFICATION_TIP = "[微信红包]"
+        private const val WECHAT_LUCKMONEY_RECEIVE_ACTIVITY = "LuckyMoneyReceiveUI"
+        private const val WECHAT_LUCKMONEY_DETAIL_ACTIVITY = "LuckyMoneyDetailUI"
+        private const val WECHAT_LUCKMONEY_GENERAL_ACTIVITY = "LauncherUI"
+        private const val WECHAT_LUCKMONEY_CHATTING_ACTIVITY = "ChattingUI"
     }
 }

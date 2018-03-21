@@ -8,7 +8,6 @@ import android.preference.PreferenceManager
 import com.songlea.hongbao.R
 import com.songlea.hongbao.activity.WebViewActivity
 import com.songlea.hongbao.util.ConnectivityUtil
-import com.songlea.hongbao.util.UpdateTask
 
 /**
  * 设置界面(使用PreferenceFragment进行首选项设置)
@@ -16,6 +15,7 @@ import com.songlea.hongbao.util.UpdateTask
  * @author Song Lea
  */
 class GeneralSettingsFragment : PreferenceFragment() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         addPreferencesFromResource(R.xml.general_preferences)
@@ -23,13 +23,6 @@ class GeneralSettingsFragment : PreferenceFragment() {
     }
 
     private fun setPrefListeners() {
-        // Check for updates
-        val updatePref = findPreference("pref_etc_check_update")
-        updatePref.onPreferenceClickListener = Preference.OnPreferenceClickListener {
-            UpdateTask(activity.applicationContext, true).update()
-            false
-        }
-
         // Open issue
         val issuePref = findPreference("pref_etc_issue")
         issuePref.onPreferenceClickListener = Preference.OnPreferenceClickListener {
@@ -43,7 +36,8 @@ class GeneralSettingsFragment : PreferenceFragment() {
 
         val excludeWordsPref = findPreference("pref_watch_exclude_words")
         val summary = resources.getString(R.string.pref_watch_exclude_words_summary)
-        val value = PreferenceManager.getDefaultSharedPreferences(activity).getString("pref_watch_exclude_words", "")
+        val value = PreferenceManager.getDefaultSharedPreferences(activity)
+                .getString("pref_watch_exclude_words", "")
         if (value?.isNotEmpty() == true) excludeWordsPref.summary = summary + ":" + value
 
         excludeWordsPref.onPreferenceChangeListener = Preference.OnPreferenceChangeListener { preference, o ->

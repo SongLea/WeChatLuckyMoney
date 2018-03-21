@@ -1,4 +1,4 @@
-package xyz.monkeytong.hongbao.utils
+package com.songlea.hongbao.util
 
 import android.app.DownloadManager
 import android.content.Context
@@ -14,6 +14,7 @@ import android.content.Context.DOWNLOAD_SERVICE
  */
 class DownloadUtil {
 
+    // 下载
     fun enqueue(url: String, context: Context) {
         val r = DownloadManager.Request(Uri.parse(url))
         r.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "")
