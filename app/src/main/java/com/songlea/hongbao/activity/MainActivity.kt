@@ -18,7 +18,7 @@ import android.widget.TextView
 import android.widget.Toast
 import com.songlea.hongbao.R
 
-import com.songlea.hongbao.util.ConnectivityUtil
+import com.songlea.hongbao.util.LuckyMoneyUtil
 
 /**
  * 应用主界面
@@ -48,10 +48,9 @@ class MainActivity : Activity(), AccessibilityManager.AccessibilityStateChangeLi
         pluginStatusText = findViewById(R.id.main_layout_control_accessibility_text)
         pluginStatusIcon = findViewById(R.id.main_layout_control_accessibility_icon)
         // 适配MI UI沉浸状态栏
-        handleMaterialStatusBar()
+        LuckyMoneyUtil.loadUI(this.window)
         // 偏好设置
         explicitlyLoadPreferences()
-        // 监听AccessibilityService 变化
         accessibilityManager = getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
         accessibilityManager.addAccessibilityStateChangeListener(this)
         // 更新红包服务状态
@@ -61,18 +60,6 @@ class MainActivity : Activity(), AccessibilityManager.AccessibilityStateChangeLi
     private fun explicitlyLoadPreferences() {
         // android下配置偏好信息的管理
         PreferenceManager.setDefaultValues(this, R.xml.general_preferences, false)
-    }
-
-    /**
-     * 适配MI UI沉浸状态栏
-     */
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    private fun handleMaterialStatusBar() {
-        // if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return // always true
-        val window = this.window
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-        window.statusBarColor = 0xffE46C62.toInt()
     }
 
     override fun onResume() {
@@ -98,7 +85,8 @@ class MainActivity : Activity(), AccessibilityManager.AccessibilityStateChangeLi
             val accessibleIntent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
             startActivity(accessibleIntent)
         } catch (e: Exception) {
-            Toast.makeText(this, getString(R.string.turn_on_error_toast), Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.turn_on_error_toast),
+                    Toast.LENGTH_LONG).show()
             Log.e(MainActivity::class.java.name, e.message)
         }
     }
@@ -106,16 +94,16 @@ class MainActivity : Activity(), AccessibilityManager.AccessibilityStateChangeLi
     // 打开设置界面
     fun openSettings(view: View) {
         val settingsIntent = Intent(this, SettingsActivity::class.java)
-        settingsIntent.putExtra(ConnectivityUtil.TITLE, getString(R.string.preference))
-        settingsIntent.putExtra(ConnectivityUtil.FRAG_ID, ConnectivityUtil.GENERAL_SETTING)
+        settingsIntent.putExtra(LuckyMoneyUtil.TITLE, getString(R.string.preference))
+        settingsIntent.putExtra(LuckyMoneyUtil.FRAG_ID, LuckyMoneyUtil.GENERAL_SETTING)
         startActivity(settingsIntent)
     }
 
     // 打开对应的github主页
     fun openGitHub(view: View) {
         val webViewIntent = Intent(this, WebViewActivity::class.java)
-        webViewIntent.putExtra(ConnectivityUtil.TITLE, getString(R.string.webview_github_title))
-        webViewIntent.putExtra(ConnectivityUtil.URL, getString(R.string.webview_github_url))
+        webViewIntent.putExtra(LuckyMoneyUtil.TITLE, getString(R.string.webview_github_title))
+        webViewIntent.putExtra(LuckyMoneyUtil.URL, getString(R.string.webview_github_url))
         startActivity(webViewIntent)
     }
 

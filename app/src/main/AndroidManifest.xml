@@ -5,7 +5,8 @@
 
     <!--应用权限定义列表-->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
     <!--allowBackup:默认情况下,这个标志被设置为true,当这个标志被设置为true,应用程序数据可以备份和恢复用户使用adb备份和恢复-->
     <application
@@ -14,17 +15,27 @@
         android:label="@string/app_name"
         tools:ignore="GoogleAppIndexingWarning">
 
-        <!--Activity-->
+        <!-- Activity launchMode的含义
+            1)standard：标准模式,这是系统默认的默认,在这种模式下,每次启动一个Activity都会重新创建一个新的实例,不管这个实例是否存在;
+            2)singleTop：栈顶复用模式,在这种模式下,如果Activity已经在任务栈的栈顶了,当再次启动同一个Activity的时候,
+                这个Activity不会被重新创建,而且它的onNewIntent()方法会被调,但是它的onCreate()方法不会被调用;
+            3)singleTask：栈内复用模式,在这种模式下,只要Activity存在栈内,那么多次启动这个Activity都不会重新创建实例,
+                系统会调用它的onNewIntent()方法,此外有个需要注意的地方,singleTask有clear top的效果,也就是说会将其以上的Activity全部出栈;
+            4)singleInstance：这是singleTask的一种加强模式,除了singleTask所有特性以外m具有此模式的Activity只能单独位于一个任务栈中.
+        -->
         <activity
-            android:name=".activity.MainActivity"
-            android:label="@string/app_name"
-            android:launchMode="singleTask"
+            android:name=".activity.WelcomeActivity"
+            android:launchMode="standard"
             android:theme="@style/Base.Theme.AppCompat.Light">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".activity.MainActivity"
+            android:launchMode="singleTask"
+            android:theme="@style/Base.Theme.AppCompat.Light" />
         <activity
             android:name=".activity.SettingsActivity"
             android:launchMode="standard"
@@ -38,6 +49,56 @@
         <service
             android:name=".service.LuckyMoneyService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <!-- AccessibilityService运行在后台,并且能够收到由系统发出的一些事件(AccessibilityEvent,这些事件表示用户界面一系列的状态变化),
+                比如焦点改变,输入内容变化,按钮被点击了等等,该种服务能够请求获取当前活动窗口并查找其中的内容.
+                1、创建服务类
+                    编写自己的服务类,需要继承AccessibilityService类.其中要实现onAccessibilityEvent(AccessibilityEvent event)及onInterrupt()两个重要的方法:
+                    disableSelf():禁用当前服务,也就是在服务可以通过该方法停止运行;
+                    findFocus(int flag):查找拥有特定焦点类型的控件;
+                    getRootInActiveWindow():如果配置能够获取窗口内容,则会返回当前活动窗口的根结点;
+                    onAccessibilityEvent(AccessibilityEvent event):有关AccessibilityEvent事件的回调函数.系统通过sendAccessibilityEvent()不断的发送AccessibilityEvent到此处;
+                    getSystemService(String name):获取系统服务;
+                    onKeyEvent(KeyEvent event):如果允许服务监听按键操作,该方法是按键事件的回调,需要注意,这个过程发生系统处理按键事件之前
+                    performGlobalAction(int action):执行全局操作,比如返回,回到主页,打开最近等操作;
+                    onServiceConnected():系统成功绑定该服务时被触发,也就是当你在设置中开启相应的服务,系统成功的绑定了该服务时会触发,通常我们可以在这里做一些初始化操作.
+                2、声明服务
+                    像其他Service服务一样,需要在AndroidManifest.xml中声明该服务.除此之外,该服务还必须配置以下两项:
+                    1)配置<intent-filter>,其name为固定的:android.accessibilityservice.AccessibilityService;
+                    2)声明BIND_ACCESSIBILITY_SERVICE权限,以便系统能够绑定该服务(4.0版本后要求)
+                3、服务参数设置
+                    在AndroidManifest.xml声明了该服务之后,接下来就是需要对该服务进行一些参数设置,
+                    该服务能够被配置用来接受指定类型的事件,监听指定package,检索窗口内容,获取事件类型的时间等等.目前有两种配置方法:
+                    1)4.0之后提供了可以通过<meta-data>标签进行配置
+                        在AndroidManifest.xml生命的的service中提供一个meta-data标签,然后通过android:resource指定相应的配置文件(如@xml/accessible_service_config)
+                    2)通过setServiceInfo()进行配置
+                        通过该方法可以在运行期间动态修改服务配置.需要注意,该方法只能用来配置动态属性:eventTypes,feedbackType,flags,notificationTimeout及packageNames.
+                4、启动服务
+                    安装成功后,在设置->辅助功能中便可以找到我们的服务.该服务默认处在关闭状态,需要手动开启.
+                5、获取事件信息
+                    onAccessibilityEvent(AccessibilityEvent event)是该服务的核心方法,其中参数event封装来自界面相关事件的信息,比如我们可以获得该事件的事件类型,进而根据起类型选择不同的处理方式:
+                    event的相关方法
+                    getEventType():事件类型
+                    getSource():获取事件源对应的结点信息
+                    getClassName():获取事件源对应类的类型,比如点击事件是有某个Button产生的,那么此时获取的就是Button的完整类名
+                    getText():获取事件源的文本信息,比如事件是有TextView发出的,此时获取的就是TextView的text属性.如果该事件源是树结构,那么此时获取的是这个树上所有具有text属性的值的集合
+                    isEnabled():事件源(对应的界面控件)是否处在可用状态
+                    getItemCount():如果事件源是树结构,将返回该树根节点下子节点的数量
+                6、获取窗口内容
+                    通过事件来获取发出该事件(事件源)的信息,本质上是关于AccessibilityWindowInfo和AccessibilityNodeInfo的树结构(只针对配置的事件)
+                7、服务的生命周期
+                    1)该种服务完全由系统管理,并遵循已有的服务周期.
+                    2)开启一个服务只能由用户在设置中打开,而关闭则只能由用户在设置中关闭或者服务本身通过disableSelf()方法关闭
+                    3)系统绑定该服务之后,会调用onServiceConnected()方法,这个方法可以被重写,在其中,你可以做一些初始化的操作
+                8、检测服务是否开启
+                    1)借助服务管理器AccessibilityManager来判断,但是该方法不能检测app本身开启的服务.
+                    AccessibilityManager常见方法
+                        getAccessibilityServiceList():获取服务列表(api14之后废弃,用下面的方法代替)
+                        getInstalledAccessibilityServiceList():获取已安装到系统的服务列表
+                        getEnabledAccessibilityServiceList(int feedbackTypeFlags):获取已启用的服务列表
+                        isEnabled():判断服务是否启用
+                        sendAccessibilityEvent(AccessibilityEvent event):发送事件
+                    2)我们可以通过直接读取setting设置来判断相关服务是否开启
+            -->
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
@@ -46,10 +107,35 @@
                 android:resource="@xml/accessible_service_config" />
         </service>
 
-        <!--Provider-->
+        <!-- Provider: 提供了结构化的数据访问方法
+                1)<provider>标签包含于<application>下
+                2)<provider>标签可以包含<meta-data> <grant-uri-permission> <path-permission>
+            属性：
+                authorities:列出一个或者多个由content provider的提供的URI的authorities,多个authorities由分号隔开,必须显式的指定(遵循java的编码惯例)
+                enabled:该属性表明了该content provider是否可以被实例化(默认为true),不论是<application> 还是<provider>中的任何一个该属性被设置为false,则该content provider不会被实例化,不会被启用.
+                exported:该属性指示了content provider是否可以被其他应用程序使用(当minSdkVersion或者targetSdkVersion小于16时该属性的默认值是true;当大于17时,该属性默认值为false):
+                    true代表该content provider可以被其他应用程序使用,其他所有的应用程序都可以通过该content provider提供的URI访问由该content provider提供的数据,在访问的时候,只需要遵循相应的权限就ok;
+                    false代表该content provider对其他应用程序来说是不可见的,将android:exported设置为false用来限制其他应用程序来访问由该content provider提供的数据,只有当应用程序的UID和该content provider的UID相同时,才可以访问;
+                grantUriPermissions:该属性用于标识哪些没有数据访问权限的应用程序是否可以访问该数据(默认值为false):
+                    true代表可以获得权限,当访问该content provider的任意数据时,都会被授权;
+                    false代表不能获得权限,当访问该content provider的任意数据时,回依据<grant-uri-permission>子标签中的规则进行授权.
+                icon:设置content provider的图标资源,如果没有设置则默认为<application>的图标;
+                initOrder:对于处在同一进程中的不同content provider来说,该属性值代表了不同content provider之间的初始化顺序(该属性的值为整数,并且数值越大优先级越高);
+                label:代表可读的content provider标签,如果该属性尚未设置则默认为<application>的label标签;
+                multiprocess:该content provider 是否可以被任意一个进程实例化(默认值为false)
+                    true代表该content provider可以运行在多个进程中
+                    false代表该content provider只能运行在一个进程中
+                name:该属性代表实现了content provider的类的名称,也就是ContentProvider的子类(必须指定);
+                permission:读写该content provider数据的权限的名称
+                    但是readPermission和writePermission的优先级要高于该属性的优先级,
+                    如果readPermission 设置的值,用于控制查询content provider的数据;writePermission设置的值,用于控制修改content provider的数据
+                process:该content provide应该运行在哪个进程中
+                syncable:content provider的数据是否要和服务数据进行同步,若同步则为true,否则为false
+         -->
         <provider
             android:name="android.support.v4.content.FileProvider"
-            android:authorities="com.songlea.hongbao.fileProvider"
+            android:authorities="com.songlea.hongbao.provider.fileProvider"
+            android:enabled="true"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

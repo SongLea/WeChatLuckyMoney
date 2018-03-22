@@ -1,4 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?><!-- AccessibilityService的服务参数配置文件
+    accessibilityEventTypes:表示该服务对界面中的哪些变化感兴趣,即哪些事件通知,比如窗口打开,滑动,焦点变化,长按等.具体的值可以在AccessibilityEvent类中查到,如typeAllMask表示接受所有的事件通知.
+    accessibilityFeedbackType:表示反馈方式,比如是语音播放,还是震动;
+    canRetrieveWindowContent:表示该服务能否访问活动窗口中的内容.也就是如果你希望在服务中获取窗体内容的变化,则需要设置其值为true.
+    notificationTimeout::接受事件的时间间隔,通常将其设置为100即可;
+    packageNames:表示该服务是用来监听哪个包的产生的事件;
+    accessibilityFlags:辅助服务额外的flag信息,例如FLAG_REPORT_VIEW_IDS可以使回调的事件带上view的ID;
+    description:服务描述信息
+ -->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged|typeNotificationStateChanged"
     android:accessibilityFeedbackType="feedbackAllMask"
@@ -6,5 +14,4 @@
     android:canRetrieveWindowContent="true"
     android:description="@string/app_description"
     android:notificationTimeout="10"
-    android:packageNames="com.tencent.mm"
-    android:settingsActivity="com.songlea.hongbao.activity.SettingsActivity" />
+    android:packageNames="com.tencent.mm" />

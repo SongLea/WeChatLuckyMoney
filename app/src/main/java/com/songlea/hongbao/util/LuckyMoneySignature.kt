@@ -51,10 +51,10 @@ class LuckyMoneySignature {
     }
 
     override fun toString(): String {
-        return this.getSignature(this.sender, this.content, this.time)!!
+        return this.getSignature(this.sender, this.content, this.time)
     }
 
-    private fun getSignature(vararg strings: String): String? {
+    private fun getSignature(vararg strings: String): String {
         var signature = ""
         for (str in strings) {
             signature += str + "|"
@@ -62,6 +62,7 @@ class LuckyMoneySignature {
         return signature.substring(0, signature.length - 1)
     }
 
+    // AccessibilityNodeInfo:
     private fun getSenderContentDescriptionFromNode(node: AccessibilityNodeInfo): Array<String> {
         val count = node.childCount
         val result = arrayOf("unknownSender", "unknownTime")

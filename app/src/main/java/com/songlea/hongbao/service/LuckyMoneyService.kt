@@ -7,9 +7,9 @@ import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.graphics.Path
 import android.graphics.Rect
 import android.os.Bundle
-import android.graphics.Path
 import android.preference.PreferenceManager
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
@@ -33,12 +33,10 @@ class LuckyMoneyService : AccessibilityService(), SharedPreferences.OnSharedPref
     private var mMutex = false
     private var mListMutex = false
     private var mChatMutex = false
+    private var sharedPreferences: SharedPreferences? = null
     private val signature = LuckyMoneySignature()
 
-    private var sharedPreferences: SharedPreferences? = null
-
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
-
         if (sharedPreferences == null) return
 
         setCurrentActivityName(event)
@@ -56,15 +54,14 @@ class LuckyMoneyService : AccessibilityService(), SharedPreferences.OnSharedPref
         }
     }
 
+    override fun onInterrupt() {
+    }
+
+
     public override fun onServiceConnected() {
         super.onServiceConnected()
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         sharedPreferences?.registerOnSharedPreferenceChangeListener(this)
-    }
-
-
-    override fun onInterrupt() {
-
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {

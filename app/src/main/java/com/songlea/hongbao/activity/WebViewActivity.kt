@@ -1,7 +1,6 @@
 package com.songlea.hongbao.activity
 
 import android.annotation.SuppressLint
-import android.annotation.TargetApi
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
@@ -12,13 +11,12 @@ import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
-import android.view.WindowManager
 import android.webkit.*
 import android.widget.TextView
 import android.widget.Toast
 import com.songlea.hongbao.R
-import com.songlea.hongbao.util.ConnectivityUtil
 import com.songlea.hongbao.util.DownloadUtil
+import com.songlea.hongbao.util.LuckyMoneyUtil
 
 
 /**
@@ -51,11 +49,14 @@ class WebViewActivity : Activity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        loadUI()  // 加载UI界面
+        setContentView(R.layout.activity_webview)
+        // 状态栏设置
+        LuckyMoneyUtil.loadUI(this.window)
+        // WebView设置
         val bundle = intent.extras
         if (bundle != null && !bundle.isEmpty) {
-            webViewTitle = bundle.getString(ConnectivityUtil.TITLE)
-            webViewUrl = bundle.getString(ConnectivityUtil.URL)
+            webViewTitle = bundle.getString(LuckyMoneyUtil.TITLE)
+            webViewUrl = bundle.getString(LuckyMoneyUtil.URL)
             webViewBar = findViewById(R.id.webView_bar)
             /** 设置WebView控件 */
             webView = findViewById(R.id.webView)
@@ -91,13 +92,13 @@ class WebViewActivity : Activity() {
                 override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                     val url = request.url.toString()
                     return when {
-                        url.contains(ConnectivityUtil.APK_TYPE) -> {
+                        url.contains(LuckyMoneyUtil.APK_TYPE) -> {
                             // 提示并下载
                             Toast.makeText(applicationContext, R.string.download_backend, Toast.LENGTH_SHORT).show()
                             DownloadUtil().enqueue(url, applicationContext)
                             true
                         }
-                        url.contains(ConnectivityUtil.HTTP_TYPE) -> {
+                        url.contains(LuckyMoneyUtil.HTTP_TYPE) -> {
                             // 在WebView中直接加载其URL
                             view.loadUrl(url)
                             false
@@ -107,6 +108,8 @@ class WebViewActivity : Activity() {
                 }
 
                 // 在页面加载结束时调用,们可以关闭loading 条,切换程序动作
+                // 注:你永远无法确定当WebView调用这个方法的时候,网页内容是否真的加载完毕了.当前正在加载的网页产生跳转的时候这个方法可能会被多次调用
+                // 所以当你的WebView需要加载各种各样的网页并且需要在页面加载完成时采取一些操作的话,可能WebChromeClient.onProgressChanged()比WebViewClient.onPageFinished()都要靠谱一些
                 override fun onPageFinished(view: WebView, url: String) {
                     CookieManager.getInstance().flush()
                 }
@@ -158,22 +161,11 @@ class WebViewActivity : Activity() {
         }
     }
 
-    // 加载UI界面
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    private fun loadUI() {
-        setContentView(R.layout.activity_webview)
-        // if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return  // always true
-        val window = this.window
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-        window.statusBarColor = 0xffE46C62.toInt()
-    }
-
     // 在当前Activity中处理并消费掉该 Back 事件,点击返回键后,是网页回退而不是退出应用
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_BACK
                 && webView != null && webView!!.canGoBack()) {
-            webView!!.goBack()
+            webView?.goBack()
             return true
         }
         return super.onKeyDown(keyCode, event)
@@ -183,11 +175,13 @@ class WebViewActivity : Activity() {
     // WebView调用destroy时,WebView仍绑定在Activity上,这是由于自定义WebView构建时传入了该Activity的context对象,
     // 因此需要先从父容器中移除WebView,然后再销毁WebView
     override fun onDestroy() {
+        super.onDestroy()
         webView?.loadDataWithBaseURL(null, "",
                 "text/html", "utf-8", null)
         webView?.clearHistory()
+        webView?.clearCache(false)
+        webView?.clearFormData()
         webView?.destroy()
-        super.onDestroy()
     }
 
     // 界面的事件函数

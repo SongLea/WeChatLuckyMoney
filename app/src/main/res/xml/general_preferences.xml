@@ -2,7 +2,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:icon="@null"
-    tools:context=".SettingsActivity">
+    tools:context="com.songlea.hongbao.fragment.GeneralSettingsFragment">
     <PreferenceCategory
         android:layout="@layout/preference_category"
         android:title="@string/watch_options">
