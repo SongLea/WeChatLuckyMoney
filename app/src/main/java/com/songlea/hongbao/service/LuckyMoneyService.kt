@@ -9,7 +9,7 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Path
 import android.graphics.Rect
-import android.os.Bundle
+import android.os.Handler
 import android.preference.PreferenceManager
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
@@ -42,14 +42,17 @@ class LuckyMoneyService : AccessibilityService(), SharedPreferences.OnSharedPref
         setCurrentActivityName(event)
         /* 检测通知消息 */
         if (!mMutex) {
-            if (sharedPreferences!!.getBoolean("pref_watch_notification", false) && watchNotifications(event)) return
-            if (sharedPreferences!!.getBoolean("pref_watch_list", false) && watchList(event)) return
+            if (sharedPreferences?.getBoolean("pref_watch_notification", false) == true
+                    && watchNotifications(event)) return
+            if (sharedPreferences?.getBoolean("pref_watch_list", false) == true
+                    && watchList(event)) return
             mListMutex = false
         }
 
         if (!mChatMutex) {
             mChatMutex = true
-            if (sharedPreferences!!.getBoolean("pref_watch_chat", false)) watchChat(event)
+            if (sharedPreferences?.getBoolean("pref_watch_chat", false) == true)
+                watchChat(event)
             mChatMutex = false
         }
     }
@@ -88,8 +91,8 @@ class LuckyMoneyService : AccessibilityService(), SharedPreferences.OnSharedPref
         }
         /* 如果戳开但还未领取 */
         if (mUnpackCount == 1 && mUnpackNode != null) {
-            val delayFlag = sharedPreferences!!.getInt("pref_open_delay", 0) * 1000
-            android.os.Handler().postDelayed({
+            val delayFlag = sharedPreferences?.getInt("pref_open_delay", 0) ?: 0 * 1000
+            Handler().postDelayed({
                 try {
                     openPacket()
                 } catch (e: Exception) {
@@ -149,7 +152,6 @@ class LuckyMoneyService : AccessibilityService(), SharedPreferences.OnSharedPref
         } catch (e: PackageManager.NameNotFoundException) {
             WECHAT_LUCKMONEY_GENERAL_ACTIVITY
         }
-
     }
 
     private fun watchList(event: AccessibilityEvent): Boolean {
@@ -223,11 +225,6 @@ class LuckyMoneyService : AccessibilityService(), SharedPreferences.OnSharedPref
     private fun checkNodeInfo(eventType: Int) {
         if (this.rootNodeInfo == null) return
 
-        if (signature.commentString != null) {
-            sendComment()
-            signature.commentString = null
-        }
-
         /* 聊天会话窗口，遍历节点匹配“领取红包”和"查看红包" */
         val node1 = if (sharedPreferences!!.getBoolean("pref_watch_self", false))
             this.getTheLastNode(WECHAT_VIEW_OTHERS_CH, WECHAT_VIEW_SELF_CH)
@@ -254,8 +251,7 @@ class LuckyMoneyService : AccessibilityService(), SharedPreferences.OnSharedPref
         }
 
         /* 戳开红包，红包已被抢完，遍历节点匹配“红包详情”和“手慢了” */
-        val hasNodes = this.hasOneOfThoseNodes(
-                WECHAT_BETTER_LUCK_CH, WECHAT_DETAILS_CH,
+        val hasNodes = this.hasOneOfThoseNodes(WECHAT_BETTER_LUCK_CH, WECHAT_DETAILS_CH,
                 WECHAT_BETTER_LUCK_EN, WECHAT_DETAILS_EN, WECHAT_EXPIRES_CH)
         if (mMutex && eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED && hasNodes
                 && (currentActivityName.contains(WECHAT_LUCKMONEY_DETAIL_ACTIVITY)
@@ -264,32 +260,13 @@ class LuckyMoneyService : AccessibilityService(), SharedPreferences.OnSharedPref
             mLuckyMoneyPicked = false
             mUnpackCount = 0
             performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)
-            signature.commentString = generateCommentString()
         }
     }
-
-    private fun sendComment() {
-        try {
-            val outNode = rootInActiveWindow.getChild(0).getChild(0)
-            val nodeToInput = outNode.getChild(outNode.childCount - 1).getChild(0).getChild(1)
-
-            if ("android.widget.EditText" == nodeToInput.className) {
-                val arguments = Bundle()
-                arguments.putCharSequence(AccessibilityNodeInfo
-                        .ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, signature.commentString)
-                nodeToInput.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
-            }
-        } catch (e: Exception) {
-            // Not supported
-        }
-
-    }
-
 
     private fun hasOneOfThoseNodes(vararg texts: String): Boolean {
         var nodes: List<AccessibilityNodeInfo>?
         for (text in texts) {
-            nodes = this.rootNodeInfo!!.findAccessibilityNodeInfosByText(text)
+            nodes = this.rootNodeInfo?.findAccessibilityNodeInfosByText(text)
             if (nodes != null && !nodes.isEmpty()) return true
         }
         return false
@@ -302,7 +279,7 @@ class LuckyMoneyService : AccessibilityService(), SharedPreferences.OnSharedPref
         var nodes: List<AccessibilityNodeInfo>?
 
         for (text in texts) {
-            nodes = this.rootNodeInfo!!.findAccessibilityNodeInfosByText(text)
+            nodes = this.rootNodeInfo?.findAccessibilityNodeInfosByText(text)
 
             if (nodes != null && !nodes.isEmpty()) {
                 tempNode = nodes[nodes.size - 1]
@@ -316,24 +293,6 @@ class LuckyMoneyService : AccessibilityService(), SharedPreferences.OnSharedPref
             }
         }
         return lastNode
-    }
-
-    private fun generateCommentString(): String? {
-        if (!signature.others) return null
-
-        val needComment = sharedPreferences!!.getBoolean("pref_comment_switch", false)
-        if (!needComment) return null
-
-        val wordsArray = sharedPreferences!!.getString("pref_comment_words", "")!!
-                .split(" +".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        if (wordsArray.isEmpty()) return null
-
-        val atSender = sharedPreferences!!.getBoolean("pref_comment_at", false)
-        return if (atSender) {
-            "@" + signature.sender + " " + wordsArray[(Math.random() * wordsArray.size).toInt()]
-        } else {
-            wordsArray[(Math.random() * wordsArray.size).toInt()]
-        }
     }
 
     companion object {

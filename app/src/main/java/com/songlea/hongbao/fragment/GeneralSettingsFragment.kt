@@ -43,7 +43,7 @@ class GeneralSettingsFragment : PreferenceFragment() {
                 .getString("pref_watch_exclude_words", "")
         val summaryDescription = getString(R.string.pref_watch_exclude_words_summary)
         if (value?.isNotEmpty() == true)
-            excludeWordsPref.summary = summaryDescription + ":" + value
+            excludeWordsPref.summary = "$summaryDescription:$value"
         excludeWordsPref.onPreferenceChangeListener = Preference.OnPreferenceChangeListener { preference, o ->
             if (o != null && o.toString().isNotEmpty()) {
                 preference.summary = summaryDescription + ":" + o.toString()

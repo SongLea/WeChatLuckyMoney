@@ -1,19 +1,24 @@
+// 插件声明
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
+// 配置了所有android构建的参数
 android {
-    // 编译版本，就是运行我们这个项目的需要的SDK
+    // 编译版本,就是运行我们这个项目的需要的SDK版本
     compileSdkVersion 27
-    // 构建工具的版本，其中包括了打包工具aapt、dx等等，这个工具的目录位于your_sdk_path/build-tools/XX.XX.XX
+    // 构建工具的版本,这个工具的目录位于your_sdk_path/build-tools/XX.XX.XX
     buildToolsVersion "27.0.3"
-    // 在android 6.0(api 23)SDK取消了对Apache HTTP客户端的支持，改用HttpURLConnection类(效率更高，因为可以通过透明压缩与响应缓存减少网络请求，并可最大限度减少耗电量)
-    useLibrary 'org.apache.http.legacy'
+    // 在android 6.0(api 23)SDK取消了对Apache HTTP客户端的支持,改用HttpURLConnection类(效率更高,因为可以通过透明压缩与响应缓存减少网络请求,并可最大限度减少耗电量)
+    // useLibrary 'org.apache.http.legacy'
 
     // 默认配置
     defaultConfig {
+        // SDK最低支持版本
         minSdkVersion 21
+        // 目标SDK版本,如果目标设备的API版本正好等于此数值,就不会为此程序开启兼容性检查判断的工作
         targetSdkVersion 27
+        // 版本号
         versionCode 1
         versionName "v0.0.1-BETA"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -44,9 +49,12 @@ android {
         release {
             debuggable false
             jniDebuggable false
-            minifyEnabled true  // 会对代码进行混淆和压缩
-            shrinkResources true // 是否清理无用资源,依赖于minifyEnabled
-            zipAlignEnabled true // 是否启用zipAlign压缩
+            // 会对代码进行混淆和压缩
+            minifyEnabled true
+            // 是否清理无用资源,依赖于minifyEnabled
+            shrinkResources true
+            // 是否启用zipAlign压缩
+            zipAlignEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.releaseConfig
         }
@@ -74,6 +82,7 @@ android {
     }
 }
 
+// 依赖的工具包
 dependencies {
     // 其中的compile已经过时，推荐使用implementation
     implementation fileTree(include: ['*.jar'], dir: 'libs')

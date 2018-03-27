@@ -1,23 +1,19 @@
 package com.songlea.hongbao.activity
 
 import android.accessibilityservice.AccessibilityServiceInfo
-import android.annotation.TargetApi
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.provider.Settings
 import android.util.Log
 import android.view.View
-import android.view.WindowManager
 import android.view.accessibility.AccessibilityManager
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import com.songlea.hongbao.R
-
 import com.songlea.hongbao.util.LuckyMoneyUtil
 
 /**
@@ -39,7 +35,7 @@ class MainActivity : Activity(), AccessibilityManager.AccessibilityStateChangeLi
         get() {
             val accessibilityServices = accessibilityManager
                     .getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_GENERIC)
-            return accessibilityServices.any { it.id == packageName + "/.services.LuckyMoneyService" }
+            return accessibilityServices.any { it.id == "$packageName/.services.LuckyMoneyService" }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {

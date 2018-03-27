@@ -1,2 +1,15 @@
-// 在Gradle中，使用文件settings.gradle定义当前项目的子项目
+/*
+1、Gradle是以Groovy语言为基础,面向Java应用为主,基于DSL（领域特定语言）语法的自动化构建工具;
+2、Gradle这个工具集成了构建,测试,发布和其他比如软件打包,生成注释文档等功能;
+3、Gradle的文件结构
+    1)./build.gradle和./app/build.gradle：项目自动编译的时候要读取的配置文件,比如指定项目的依赖包等
+        build.grade有两个,一个是全局的,一个是在模块里面,全局的build.grade主要设置的是声明仓库源,gradle的版本号说明等;
+    2)./app/proguard-rules.pro：混淆模板配置文件;
+    3)./gradle.properties：grade的运行环境配置,比如使用多少内存之类的;
+    4)./gradlew和./gradlew.bat：自动完成gradle环境的脚本,在linux和mac下直接运行gradlew会自动完成gradle环境的搭建;
+    5)./local.properties：配置SDK或者NDK的环境路径,各个机器上这个变量可能都是不一样的,所以不应该进入版本库;
+    6)./setting.gradle：整个项目的管理，比如这个项目包含哪些模块等;
+ */
+
+// 在Gradle中,使用文件settings.gradle定义当前项目的子项目.
 include ':app'
